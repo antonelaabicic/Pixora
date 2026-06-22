@@ -1,4 +1,7 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
+using Pixora.BL.Services.Auth;
+using Pixora.BL.Services.ImageProcessing;
+using Pixora.BL.Services.Plans;
 
 namespace Pixora.BL
 {
@@ -11,6 +14,11 @@ namespace Pixora.BL
             services.AddScoped<IPlanPolicy, GoldPlanPolicy>();
 
             services.AddScoped<PlanPolicyResolver>();
+
+            services.AddScoped<IImageProcessingPipelineFactory, ImageProcessingPipelineFactory>();
+            services.AddScoped<IImageProcessor, ImageProcessor>();
+
+            services.AddScoped<IAuthFacade, AuthFacade>();
 
             return services;
         }
