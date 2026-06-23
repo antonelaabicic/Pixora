@@ -55,5 +55,9 @@ namespace Pixora.DAL.Config
 
         public static string SupabaseStorageObjectUrl(string fileName) => $"{SupabaseUrl}/storage/v1/object/{SupabaseBucket}/{fileName}";
         public static string SupabasePublicUrl(string fileName) => $"{SupabasePublicBaseUrl}/{fileName}";
+
+        public static string JwtSecret => GetRequiredEnv("JWT_SECRET", 32);
+        public static string JwtIssuer => GetRequiredEnv("JWT_ISSUER");
+        public static string JwtAudience => GetRequiredEnv("JWT_AUDIENCE");
     }
 }

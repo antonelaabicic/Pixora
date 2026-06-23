@@ -11,12 +11,10 @@ namespace Pixora.BL.Services.Plans
     {
         public override PlanType PlanType => PlanType.Free;
 
-        public override long MaxFileSizeBytes => 2 * 1024 * 1024;
+        protected override long MaxFileSizeBytes => 2 * 1024 * 1024;
 
-        public override int MaxDailyUploads => 5;
+        protected override int MaxDailyUploads => 5;
 
-        public override long MaxStorageBytes => 50 * 1024 * 1024;
-
-        public override bool AllowsAdvancedFilters => false;
+        protected override long MaxStorageBytes => 50 * 1024 * 1024;
     }
 }

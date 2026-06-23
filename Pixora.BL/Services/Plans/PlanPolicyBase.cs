@@ -11,18 +11,27 @@ namespace Pixora.BL.Services.Plans
     {
         public abstract PlanType PlanType { get; }
 
-        public abstract long MaxFileSizeBytes { get; }
+        protected abstract long MaxFileSizeBytes { get; }
 
-        public abstract int MaxDailyUploads { get; }
+        protected abstract int MaxDailyUploads { get; }
 
-        public abstract long MaxStorageBytes { get; }
+        protected abstract long MaxStorageBytes { get; }
 
-        public abstract bool AllowsAdvancedFilters { get; }
-
-        public virtual bool CanUpload(long fileSizeBytes, int uploadsToday, long currentStorageUsedBytes)
+        public bool CanUpload(long fileSizeBytes, int uploadsToday, long currentStorageUsedBytes)
         {
-            return fileSizeBytes <= MaxFileSizeBytes && uploadsToday < MaxDailyUploads
-                && currentStorageUsedBytes + fileSizeBytes <= MaxStorageBytes;
+            return ValidateFileSize(fileSizeBytes) && ValidateDailyUploads(uploadsToday) && ValidateStorage(fileSizeBytes, currentStorageUsedBytes);
+        }
+        protected virtual bool ValidateFileSize(long fileSizeBytes)
+        {
+            return fileSizeBytes <= MaxFileSizeBytes;
+        }
+        protected virtual bool ValidateDailyUploads(int uploadsToday)
+        {
+            return uploadsToday < MaxDailyUploads;
+        }
+        protected virtual bool ValidateStorage(long fileSizeBytes, long currentStorageUsedBytes)
+        {
+            return currentStorageUsedBytes + fileSizeBytes <= MaxStorageBytes;
         }
     }
 }
