@@ -17,14 +17,6 @@ namespace Pixora.DAL.Repositories.Impl
             _context = context;
         }
 
-        public UserActionLog Delete(int id)
-        {
-            var log = GetById(id) ?? throw new ArgumentException($"Log with id {id} not found.");
-            _context.UserActionLogs.Remove(log);
-
-            return log;
-        }
-
         public IEnumerable<UserActionLog> GetAll()
         {
             return _context.UserActionLogs
@@ -43,6 +35,7 @@ namespace Pixora.DAL.Repositories.Impl
         public IEnumerable<UserActionLog> GetByUserId(string userId)
         {
             return _context.UserActionLogs
+                .Include(l => l.User)
                 .Where(l => l.UserId == userId)
                 .OrderByDescending(l => l.CreatedAt)
                 .ToList();
@@ -51,24 +44,20 @@ namespace Pixora.DAL.Repositories.Impl
         public IEnumerable<UserActionLog> GetLatest(int count)
         {
             return _context.UserActionLogs
+                .Include(l => l.User)
                 .OrderByDescending(l => l.CreatedAt)
                 .Take(count)
                 .ToList();
         }
 
-        public void Insert(UserActionLog entity)
+        public void Insert(UserActionLog log)
         {
-            _context.UserActionLogs.Add(entity);
+            _context.UserActionLogs.Add(log);
         }
 
         public void Save()
         {
             _context.SaveChanges();
-        }
-
-        public void Update(UserActionLog entity)
-        {
-            _context.UserActionLogs.Update(entity);
         }
     }
 }
