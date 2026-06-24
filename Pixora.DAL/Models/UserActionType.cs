@@ -14,8 +14,7 @@ namespace Pixora.DAL.Models
         UploadedPhoto,
         EditedPhoto,
         DeletedPhoto,
-        DownloadedOriginalPhoto,
-        DownloadedProcessedPhoto,
+        DownloadedPhoto,
         ChangedPlan,
         AdminUpdatedUser,
         AdminDeletedPhoto

@@ -59,5 +59,11 @@ namespace Pixora.DAL.Config
         public static string JwtSecret => GetRequiredEnv("JWT_SECRET", 32);
         public static string JwtIssuer => GetRequiredEnv("JWT_ISSUER");
         public static string JwtAudience => GetRequiredEnv("JWT_AUDIENCE");
+
+        public static string GoogleClientId => GetRequiredEnv("GOOGLE_CLIENT_ID");
+        public static string GoogleClientSecret => GetRequiredEnv("GOOGLE_CLIENT_SECRET");
+
+        public static string GitHubClientId => GetRequiredEnv("GITHUB_CLIENT_ID");
+        public static string GitHubClientSecret => GetRequiredEnv("GITHUB_CLIENT_SECRET");
     }
 }

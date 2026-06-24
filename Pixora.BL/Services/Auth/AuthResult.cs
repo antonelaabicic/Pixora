@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Pixora.BL.DTOs;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -10,14 +11,18 @@ namespace Pixora.BL.Services.Auth
     {
         public bool Succeeded { get; set; }
         public string? Message { get; set; }
-        public static AuthResult Success(string? message = null)
+        public AuthResponseDto? Data { get; set; }
+
+        public static AuthResult Success(string? message = null, AuthResponseDto? data = null)
         {
             return new AuthResult
             {
                 Succeeded = true,
-                Message = message
+                Message = message,
+                Data = data
             };
         }
+
         public static AuthResult Failure(string message)
         {
             return new AuthResult

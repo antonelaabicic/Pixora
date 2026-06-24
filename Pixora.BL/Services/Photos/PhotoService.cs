@@ -57,6 +57,13 @@ namespace Pixora.BL.Services.Photos
 
             var extension = dto.ProcessingOptions.OutputFormat;
 
+            if (string.IsNullOrWhiteSpace(extension) || extension == "string")
+            {
+                extension = Path.GetExtension(dto.OriginalFileName)
+                    .TrimStart('.')
+                    .ToLower();
+            }
+
             var imageUrl = await _storageService.UploadImageAsync(processedStream, extension, GetContentType(extension));
 
             var photo = _mapper.Map<Photo>(dto);
@@ -81,8 +88,6 @@ namespace Pixora.BL.Services.Photos
             user.StorageUsedBytes += dto.FileSizeBytes;
             _userRepository.Update(user);
             _userRepository.Save();
-
-            _logService.Log(dto.UserId, UserActionType.UploadedPhoto, $"Uploaded photo {photo.Id}.");
 
             return photo.Id;
         }
@@ -140,8 +145,6 @@ namespace Pixora.BL.Services.Photos
             _photoRepository.Update(photo);
             _photoRepository.Save();
             _photoHashtagRepository.Save();
-
-            _logService.Log(dto.UserId, UserActionType.EditedPhoto, $"Edited photo {photo.Id}.");
         }
 
         public async Task DeleteAsync(int photoId, string userId, bool isAdmin = false)
@@ -166,12 +169,9 @@ namespace Pixora.BL.Services.Photos
                 _userRepository.Update(user);
                 _userRepository.Save();
             }
-
-            _logService.Log(userId, isAdmin ? UserActionType.AdminDeletedPhoto : UserActionType.DeletedPhoto,
-                $"Deleted photo {photoId}.");
         }
 
-        public async Task<Stream> DownloadOriginalAsync(int photoId)
+        public async Task<DownloadPhotoDto> DownloadAsync(int photoId)
         {
             var photo = _photoRepository.GetById(photoId) ?? throw new InvalidOperationException("Photo not found.");
 
@@ -182,31 +182,19 @@ namespace Pixora.BL.Services.Photos
             await stream.CopyToAsync(memoryStream);
             memoryStream.Position = 0;
 
-            _logService.Log(photo.AuthorId, UserActionType.DownloadedOriginalPhoto, $"Downloaded original photo {photo.Id}.");
+            var extension = Path.GetExtension(photo.ImagePath);
 
-            return memoryStream;
-        }
+            if (string.IsNullOrWhiteSpace(extension))
+            {
+                extension = ".jpg";
+            }
 
-        public async Task<Stream> DownloadProcessedAsync(DownloadProcessedPhotoDto dto)
-        {
-            var photo = _photoRepository.GetById(dto.PhotoId)
-                ?? throw new InvalidOperationException("Photo not found.");
-
-            using var httpClient = new HttpClient();
-            var stream = await httpClient.GetStreamAsync(photo.ImagePath);
-
-            var memoryStream = new MemoryStream();
-            await stream.CopyToAsync(memoryStream);
-            memoryStream.Position = 0;
-
-            var processedStream = _imageProcessor.Process(memoryStream, dto.ProcessingOptions);
-
-            _logService.Log(
-                photo.AuthorId,
-                UserActionType.DownloadedProcessedPhoto,
-                $"Downloaded processed photo {photo.Id}.");
-
-            return processedStream;
+            return new DownloadPhotoDto
+            {
+                Stream = memoryStream,
+                FileName = $"photo-{photo.Id}{extension}",
+                ContentType = GetContentType(extension)
+            };
         }
 
         private static string GetContentType(string extension)

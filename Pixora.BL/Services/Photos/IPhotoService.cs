@@ -27,8 +27,6 @@ namespace Pixora.BL.Services.Photos
 
         Task DeleteAsync(int photoId, string userId, bool isAdmin = false);
 
-        Task<Stream> DownloadOriginalAsync(int photoId);
-
-        Task<Stream> DownloadProcessedAsync(DownloadProcessedPhotoDto dto);
+        Task<DownloadPhotoDto> DownloadAsync(int photoId);
     }
 }

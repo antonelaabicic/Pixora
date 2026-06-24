@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using Pixora.BL.DTOs;
+using Pixora.DAL.Models;
 using Pixora.DAL.Repositories.Interfaces;
 using System;
 using System.Collections.Generic;
@@ -23,23 +24,30 @@ namespace Pixora.BL.Services.Plans
         {
             var user = _userRepository.GetById(userId) ?? throw new InvalidOperationException("User not found.");
 
+            if (!user.PendingPlanType.HasValue || !user.PendingPlanActiveFrom.HasValue)
+            {
+                return;
+            }
+
             var today = DateOnly.FromDateTime(DateTime.UtcNow);
 
-            if (user.PendingPlanType.HasValue && user.PendingPlanActiveFrom.HasValue &&             user.PendingPlanActiveFrom.Value <= today)
+            if (user.PendingPlanActiveFrom.Value > today)
             {
-                user.PlanType = user.PendingPlanType.Value;
-                user.PendingPlanType = null;
-                user.PendingPlanActiveFrom = null;
-
-                _userRepository.Update(user);
-                _userRepository.Save();
+                return;
             }
+
+            user.PlanType = user.PendingPlanType.Value;
+            user.PendingPlanType = null;
+            user.PendingPlanActiveFrom = null;
+
+            _userRepository.Update(user);
+            _userRepository.Save();
         }
 
         public UserDto GetUserPlan(string userId)
         {
+            ApplyPendingPlanIfNeeded(userId);
             var user = _userRepository.GetById(userId) ?? throw new InvalidOperationException("User not found.");
-
             return _mapper.Map<UserDto>(user);
         }
 
@@ -57,6 +65,19 @@ namespace Pixora.BL.Services.Plans
             user.PendingPlanType = dto.NewPlanType;
             user.PendingPlanActiveFrom = today.AddDays(1);
             user.LastPlanChangeDate = today;
+
+            _userRepository.Update(user);
+            _userRepository.Save();
+        }
+
+        public void AdminChangeUserPlan(string userId, PlanType newPlanType)
+        {
+            var user = _userRepository.GetById(userId) ?? throw new InvalidOperationException("User not found.");
+
+            user.PlanType = newPlanType;
+            user.PendingPlanType = null;
+            user.PendingPlanActiveFrom = null;
+            user.LastPlanChangeDate = null;
 
             _userRepository.Update(user);
             _userRepository.Save();
