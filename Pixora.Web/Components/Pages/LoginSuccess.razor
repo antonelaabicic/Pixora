@@ -1,0 +1,29 @@
+﻿@page "/login-success"
+@inject IJSRuntime JSRuntime
+@inject NavigationManager Navigation
+@inject JwtService JwtService
+@inject AuthStateService AuthService
+@rendermode InteractiveServer
+
+<p>Logging you in...</p>
+
+@code {
+    [SupplyParameterFromQuery]
+    public string? Token { get; set; }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender)
+            return;
+
+        if (!string.IsNullOrWhiteSpace(Token))
+        {
+            await JSRuntime.InvokeVoidAsync("sessionStorage.setItem", "jwt", Token);
+
+            var role = await JwtService.GetRoleAsync();
+            AuthService.SetUser(role);
+        }
+
+        Navigation.NavigateTo("/");
+    }
+}

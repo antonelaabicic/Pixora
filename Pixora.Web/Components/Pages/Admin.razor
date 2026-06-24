@@ -1,0 +1,171 @@
+﻿@page "/admin"
+@inject AuthorizedHttpClient AuthorizedClient
+@rendermode InteractiveServer
+
+<h3>Admin Dashboard</h3>
+
+@if (!string.IsNullOrWhiteSpace(message))
+{
+    <div class="alert alert-info">@message</div>
+}
+
+<h4 class="mt-4">Users</h4>
+
+@if (users == null)
+{
+    <p>Loading users...</p>
+}
+else
+{
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Email</th>
+                <th>Plan</th>
+                <th>Pending</th>
+                <th>Storage</th>
+                <th>Change plan</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var user in users)
+            {
+                <tr>
+                    <td>@user.Email</td>
+                    <td>@user.PlanType</td>
+                    <td>@user.PendingPlanType</td>
+                    <td>@FormatBytes(user.StorageUsedBytes)</td>
+                    <td>
+                        <select class="form-select form-select-sm d-inline w-auto" @bind="selectedPlans[user.Id]">
+                            <option value="0">Free</option>
+                            <option value="1">Pro</option>
+                            <option value="2">Gold</option>
+                        </select>
+
+                        <button class="btn btn-sm btn-warning ms-2"
+                                @onclick="() => ChangeUserPlan(user.Id)">
+                            Save
+                        </button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+<h4 class="mt-4">Latest Logs</h4>
+
+@if (logs == null)
+{
+    <p>Loading logs...</p>
+}
+else
+{
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>User</th>
+                <th>Action</th>
+                <th>Details</th>
+                <th>Created at</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var log in logs)
+            {
+                <tr>
+                    <td>@log.UserEmail</td>
+                    <td>@log.ActionType</td>
+                    <td>@log.Details</td>
+                    <td>@log.CreatedAt.ToString("dd.MM.yyyy HH:mm")</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private List<UserDto>? users;
+    private List<UserActionLogDto>? logs;
+    private string? message;
+
+    private Dictionary<string, int> selectedPlans = new();
+
+    private bool loaded;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender || loaded)
+            return;
+
+        loaded = true;
+        await LoadData();
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task LoadData()
+    {
+        var client = await AuthorizedClient.GetClientAsync();
+
+        users = await client.GetFromJsonAsync<List<UserDto>>("api/admin/users");
+        logs = await client.GetFromJsonAsync<List<UserActionLogDto>>("api/admin/logs/latest?count=20");
+
+        selectedPlans = users?.ToDictionary(u => u.Id, u => (int)u.PlanType) ?? new();
+    }
+
+    private async Task ChangeUserPlan(string userId)
+    {
+        var client = await AuthorizedClient.GetClientAsync();
+
+        var response = await client.PutAsJsonAsync($"api/admin/users/{userId}/plan", new ChangeUserPlanRequest
+        {
+            NewPlanType = selectedPlans[userId]
+        });
+
+        message = response.IsSuccessStatusCode
+            ? "User plan changed."
+            : await response.Content.ReadAsStringAsync();
+
+        await LoadData();
+    }
+
+    private static string FormatBytes(long bytes)
+    {
+        if (bytes >= 1024 * 1024)
+            return $"{bytes / 1024.0 / 1024.0:F2} MB";
+
+        return $"{bytes / 1024.0:F2} KB";
+    }
+
+    public class UserDto
+    {
+        public string Id { get; set; } = "";
+        public string? Email { get; set; }
+        public PlanType PlanType { get; set; }
+        public PlanType? PendingPlanType { get; set; }
+        public DateOnly? PendingPlanActiveFrom { get; set; }
+        public long StorageUsedBytes { get; set; }
+    }
+
+    public class UserActionLogDto
+    {
+        public int Id { get; set; }
+        public string? UserId { get; set; }
+        public string? UserEmail { get; set; }
+        public string ActionType { get; set; } = "";
+        public string Details { get; set; } = "";
+        public DateTime CreatedAt { get; set; }
+    }
+
+    public class ChangeUserPlanRequest
+    {
+        public int NewPlanType { get; set; }
+    }
+
+    public enum PlanType
+    {
+        Free = 0,
+        Pro = 1,
+        Gold = 2
+    }
+}

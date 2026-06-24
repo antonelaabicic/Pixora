@@ -121,6 +121,7 @@ namespace Pixora.BL.Services.Auth
                 {
                     return AuthResult.Failure("External user not found.");
                 }
+                _logService.Log(existingUser.Id, UserActionType.LoggedIn, $"{existingUser.Email} logged in with {info.LoginProvider}.");
 
                 var existingToken = await _jwtService.GenerateTokenAsync(existingUser);
                 return AuthResult.Success("External login successful.", existingToken);
@@ -154,6 +155,9 @@ namespace Pixora.BL.Services.Auth
 
             await _userManager.AddLoginAsync(user, info);
             await _userManager.AddToRoleAsync(user, "User");
+
+            _logService.Log(user.Id, UserActionType.Registered, $"{user.Email} registered with {info.LoginProvider}.");
+            _logService.Log(user.Id, UserActionType.LoggedIn, $"{user.Email} logged in with {info.LoginProvider}.");
 
             var token = await _jwtService.GenerateTokenAsync(user);
 

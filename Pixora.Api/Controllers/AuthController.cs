@@ -80,12 +80,12 @@ namespace Pixora.Api.Controllers
         {
             var result = await _authFacade.ExternalLoginCallbackAsync();
 
-            if (!result.Succeeded)
+            if (!result.Succeeded || result.Data == null)
             {
                 return BadRequest(result.Message);
             }
 
-            return Ok(result.Data);
+            return Redirect($"https://localhost:7136/login-success?token={result.Data.Token}");
         }
     }
 }

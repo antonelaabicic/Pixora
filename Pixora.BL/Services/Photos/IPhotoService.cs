@@ -23,7 +23,7 @@ namespace Pixora.BL.Services.Photos
 
         IEnumerable<Photo> Search(PhotoSearchDto dto);
 
-        void EditMetadata(EditPhotoMetadataDto dto);
+        void EditMetadata(EditPhotoMetadataDto dto, bool isAdmin);
 
         Task DeleteAsync(int photoId, string userId, bool isAdmin = false);
 

@@ -9,6 +9,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Pixora.DAL", "Pixora.DAL\Pi
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Pixora.BL", "Pixora.BL\Pixora.BL.csproj", "{6961C6EF-EE47-4EF2-B4E0-62107D9B8115}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Pixora.Web", "Pixora.Web\Pixora.Web.csproj", "{658E6BBB-F472-43FB-9463-5D5C2B95C322}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -27,6 +29,10 @@ Global
 		{6961C6EF-EE47-4EF2-B4E0-62107D9B8115}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6961C6EF-EE47-4EF2-B4E0-62107D9B8115}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{6961C6EF-EE47-4EF2-B4E0-62107D9B8115}.Release|Any CPU.Build.0 = Release|Any CPU
+		{658E6BBB-F472-43FB-9463-5D5C2B95C322}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{658E6BBB-F472-43FB-9463-5D5C2B95C322}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{658E6BBB-F472-43FB-9463-5D5C2B95C322}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{658E6BBB-F472-43FB-9463-5D5C2B95C322}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

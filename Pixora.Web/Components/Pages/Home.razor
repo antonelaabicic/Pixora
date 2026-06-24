@@ -1,0 +1,533 @@
+﻿@page "/"
+@using Pixora.Web.Builders
+@inject HttpClient Http
+@inject AuthorizedHttpClient AuthorizedClient
+@inject AuthStateService AuthService
+@inject IJSRuntime JSRuntime
+@rendermode InteractiveServer
+
+<h2 class="mb-4">Pixora Gallery</h2>
+
+<div class="d-flex justify-content-between mb-4">
+    <button class="btn btn-outline-primary" @onclick="LoadLatestPhotos">
+        Latest 10 photos
+    </button>
+
+    @if (AuthService.IsLoggedIn)
+    {
+        <button class="btn btn-primary" @onclick="OpenUploadModal">
+            Upload photo
+        </button>
+    }
+</div>
+
+<div class="card mb-4 shadow-sm">
+    <div class="card-body">
+        <h5>Search photos</h5>
+
+        <div class="row g-3">
+            <div class="col-md-3">
+                <input class="form-control" placeholder="Hashtag" @bind="search.Hashtag" />
+            </div>
+
+            <div class="col-md-3">
+                <input class="form-control" placeholder="Author email" @bind="search.AuthorEmail" />
+            </div>
+
+            <div class="col-md-2">
+                <input class="form-control" type="number" placeholder="Min size bytes" @bind="search.MinSizeBytes" />
+            </div>
+
+            <div class="col-md-2">
+                <input class="form-control" type="number" placeholder="Max size bytes" @bind="search.MaxSizeBytes" />
+            </div>
+
+            <div class="col-md-3">
+                <label>Uploaded from</label>
+                <InputDate class="form-control" @bind-Value="uploadedFrom" />
+            </div>
+
+            <div class="col-md-3">
+                <label>Uploaded to</label>
+                <InputDate class="form-control" @bind-Value="uploadedTo" />
+            </div>
+
+            <div class="col-md-2 align-self-end">
+                <button class="btn btn-outline-primary w-100" @onclick="SearchPhotos">
+                    Search
+                </button>
+            </div>
+
+            @if (AuthService.IsLoggedIn)
+            {
+                <div class="col-md-2 align-self-end">
+                    <button class="btn btn-outline-secondary w-100" @onclick="OnlyMyPhotos">
+                        Only my photos
+                    </button>
+                </div>
+            }
+
+            <div class="col-md-2 align-self-end">
+                <button class="btn btn-outline-dark w-100" @onclick="LoadLatestPhotos">
+                    Reset
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@if (photos == null)
+{
+    <p>Loading photos...</p>
+}
+else if (!photos.Any())
+{
+    <p>No photos found.</p>
+}
+else
+{
+    <div class="row g-4">
+        @foreach (var photo in photos)
+        {
+            <div class="col-md-3">
+                <div class="card h-100 shadow-sm">
+                    <img src="@photo.ImagePath"
+                         class="card-img-top"
+                         style="height:180px; object-fit:cover; cursor:pointer;"
+                         @onclick="() => OpenPhotoModal(photo)" />
+
+                    <div class="card-body">
+                        <p>@photo.Description</p>
+
+                        <small class="text-muted">
+                            @photo.AuthorEmail <br />
+                            @photo.UploadedAt.ToString("dd.MM.yyyy HH:mm")
+                        </small>
+
+                        <div class="mt-2">
+                            @foreach (var tag in photo.Hashtags)
+                            {
+                                <span class="badge bg-secondary me-1">#@tag</span>
+                            }
+                        </div>
+
+                        @if (AuthService.IsLoggedIn && (currentUserEmail == photo.AuthorEmail || AuthService.Role == "Admin"))
+                        {
+                            <button class="btn btn-sm btn-outline-warning mt-3"
+                                    @onclick="() => OpenEditModal(photo)">
+                                Edit metadata
+                            </button>
+                            <button class="btn btn-sm btn-outline-danger mt-3 ms-2"
+                                    @onclick="() => DeletePhoto(photo.Id)">
+                                Delete
+                            </button>
+                        }
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}
+
+@if (selectedPhoto != null)
+{
+    <div class="modal show d-block" style="background-color:rgba(0,0,0,0.6);">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5>@selectedPhoto.Description</h5>
+                    <button class="btn-close" @onclick="ClosePhotoModal"></button>
+                </div>
+
+                <div class="modal-body text-center">
+                    <img src="@selectedPhoto.ImagePath" class="img-fluid" />
+
+                    @if (AuthService.IsLoggedIn)
+                    {
+                        <div class="mt-3">
+                            <button class="btn btn-primary" @onclick="() => DownloadPhoto(selectedPhoto.Id)">
+                                Download
+                            </button>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@if (editingPhoto != null)
+{
+    <div class="modal show d-block" style="background-color:rgba(0,0,0,0.6);">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5>Edit metadata</h5>
+                    <button class="btn-close" @onclick="CloseEditModal"></button>
+                </div>
+
+                <div class="modal-body">
+                    <label>Description</label>
+                    <input class="form-control mb-3" @bind="editDescription" />
+
+                    <label>Hashtags:</label>
+                    <input class="form-control" @bind="editHashtags" />
+                </div>
+
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" @onclick="CloseEditModal">Cancel</button>
+                    <button class="btn btn-primary" @onclick="SaveMetadata">Save</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@if (showUploadModal)
+{
+    <div class="modal show d-block" style="background-color:rgba(0,0,0,0.6);">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5>Upload photo</h5>
+                    <button class="btn-close" @onclick="CloseUploadModal"></button>
+                </div>
+
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label>Photo</label>
+                        <InputFile class="form-control" OnChange="SelectFile" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label>Description</label>
+                        <input class="form-control" @bind="upload.Description" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label>Hashtags: </label>
+                        <input class="form-control" @bind="hashtagText" placeholder="nature, summer, city" />
+                    </div>
+
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="checkbox" @bind="upload.Resize" />
+                        <label class="form-check-label">Resize</label>
+                    </div>
+
+                    @if (upload.Resize)
+                    {
+                        <div class="row mb-3">
+                            <div class="col">
+                                <input class="form-control" type="number" placeholder="Width" @bind="upload.Width" />
+                            </div>
+                            <div class="col">
+                                <input class="form-control" type="number" placeholder="Height" @bind="upload.Height" />
+                            </div>
+                        </div>
+                    }
+
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="checkbox" @bind="upload.ApplySepia" />
+                        <label class="form-check-label">Sepia</label>
+                    </div>
+
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="checkbox" @bind="upload.ApplyBlur" />
+                        <label class="form-check-label">Blur</label>
+                    </div>
+
+                    @if (upload.ApplyBlur)
+                    {
+                        <div class="mb-3">
+                            <label>Blur amount</label>
+                            <input class="form-control" type="number" step="0.5" @bind="upload.BlurAmount" />
+                        </div>
+                    }
+
+                    <div class="mb-3">
+                        <label>Output format</label>
+                        <select class="form-select" @bind="upload.OutputFormat">
+                            <option value="jpg">JPG</option>
+                            <option value="png">PNG</option>
+                            <option value="bmp">BMP</option>
+                        </select>
+                    </div>
+
+                    @if (!string.IsNullOrWhiteSpace(uploadMessage))
+                    {
+                        <div class="alert alert-info">@uploadMessage</div>
+                    }
+                </div>
+
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" @onclick="CloseUploadModal">Cancel</button>
+                    <button class="btn btn-primary" @onclick="UploadPhoto">Upload</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private List<PhotoDto>? photos;
+    private PhotoDto? selectedPhoto;
+    private PhotoDto? editingPhoto;
+
+    private string? currentUserEmail;
+    private DateTime? uploadedFrom;
+    private DateTime? uploadedTo;
+
+    private string editDescription = "";
+    private string editHashtags = "";
+
+    private bool showUploadModal;
+    private IBrowserFile? selectedFile;
+    private UploadModel upload = new();
+    private string hashtagText = "";
+    private string? uploadMessage;
+
+    private PhotoSearchDto search = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (AuthService.IsLoggedIn)
+        {
+            var client = await AuthorizedClient.GetClientAsync();
+            var me = await client.GetFromJsonAsync<UserDto>("api/user/me");
+            currentUserEmail = me?.Email;
+        }
+
+        await LoadLatestPhotos();
+    }
+
+    private async Task LoadLatestPhotos()
+    {
+        photos = await Http.GetFromJsonAsync<List<PhotoDto>>("api/photos/latest?count=10");
+        search = new();
+        uploadedFrom = null;
+        uploadedTo = null;
+    }
+
+    private async Task SearchPhotos()
+    {
+        search.UploadedFrom = uploadedFrom.HasValue
+            ? DateTime.SpecifyKind(uploadedFrom.Value.Date, DateTimeKind.Utc)
+            : null;
+
+        search.UploadedTo = uploadedTo.HasValue
+            ? DateTime.SpecifyKind(uploadedTo.Value.Date.AddDays(1).AddTicks(-1), DateTimeKind.Utc)
+            : null;
+
+        var response = await Http.PostAsJsonAsync("api/photos/search", search);
+        photos = await response.Content.ReadFromJsonAsync<List<PhotoDto>>();
+    }
+
+    private async Task OnlyMyPhotos()
+    {
+        var client = await AuthorizedClient.GetClientAsync();
+        var me = await client.GetFromJsonAsync<UserDto>("api/user/me");
+
+        if (me == null || string.IsNullOrWhiteSpace(me.Email))
+            return;
+
+        search.AuthorEmail = me.Email;
+        currentUserEmail = me.Email;
+
+        await SearchPhotos();
+    }
+
+    private void OpenPhotoModal(PhotoDto photo)
+    {
+        selectedPhoto = photo;
+    }
+
+    private void ClosePhotoModal()
+    {
+        selectedPhoto = null;
+    }
+
+    private void OpenEditModal(PhotoDto photo)
+    {
+        editingPhoto = photo;
+        editDescription = photo.Description;
+        editHashtags = string.Join(", ", photo.Hashtags);
+    }
+
+    private void CloseEditModal()
+    {
+        editingPhoto = null;
+    }
+
+    private async Task SaveMetadata()
+    {
+        if (editingPhoto == null)
+            return;
+
+        var request = new EditPhotoMetadataRequest
+        {
+            Description = editDescription,
+            Hashtags = editHashtags
+                .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                .ToList()
+        };
+
+        var client = await AuthorizedClient.GetClientAsync();
+        var url = AuthService.Role == "Admin"
+            ? $"api/admin/photos/{editingPhoto.Id}/metadata"
+            : $"api/photos/{editingPhoto.Id}/metadata";
+
+        var response = await client.PutAsJsonAsync(url, request);
+
+        if (response.IsSuccessStatusCode)
+        {
+            editingPhoto = null;
+            await SearchPhotos();
+        }
+    }
+
+    private void OpenUploadModal()
+    {
+        upload = new UploadModel();
+        hashtagText = "";
+        selectedFile = null;
+        uploadMessage = null;
+        showUploadModal = true;
+    }
+
+    private void CloseUploadModal()
+    {
+        showUploadModal = false;
+    }
+
+    private void SelectFile(InputFileChangeEventArgs e)
+    {
+        selectedFile = e.File;
+    }
+
+    private async Task UploadPhoto()
+    {
+        if (selectedFile == null)
+        {
+            uploadMessage = "Please choose a file.";
+            return;
+        }
+
+        var client = await AuthorizedClient.GetClientAsync();
+
+        using var content = new MultipartFormDataContent();
+
+        var fileContent = new StreamContent(selectedFile.OpenReadStream(maxAllowedSize: 20 * 1024 * 1024));
+        fileContent.Headers.ContentType =
+            new System.Net.Http.Headers.MediaTypeHeaderValue(selectedFile.ContentType);
+
+        content.Add(fileContent, "File", selectedFile.Name);
+        content.Add(new StringContent(upload.Description ?? ""), "Description");
+
+        foreach (var tag in hashtagText.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+        {
+            content.Add(new StringContent(tag), "Hashtags");
+        }
+
+        var options = new ProcessingOptionsBuilder()
+            .WithResize(upload.Resize, upload.Width, upload.Height)
+            .WithSepia(upload.ApplySepia)
+            .WithBlur(upload.ApplyBlur, upload.BlurAmount)
+            .WithFormat(upload.OutputFormat)
+            .Build();
+
+        content.Add(new StringContent(options.Resize.ToString()), "Resize");
+        content.Add(new StringContent((options.Width ?? 0).ToString()), "Width");
+        content.Add(new StringContent((options.Height ?? 0).ToString()), "Height");
+        content.Add(new StringContent(options.ApplySepia.ToString()), "ApplySepia");
+        content.Add(new StringContent(options.ApplyBlur.ToString()), "ApplyBlur");
+        content.Add(new StringContent(options.BlurAmount.ToString()), "BlurAmount");
+        content.Add(new StringContent(options.OutputFormat), "OutputFormat");
+
+        var response = await client.PostAsync("api/photos/upload", content);
+
+        if (!response.IsSuccessStatusCode)
+        {
+            uploadMessage = await response.Content.ReadAsStringAsync();
+            return;
+        }
+
+        showUploadModal = false;
+        await LoadLatestPhotos();
+    }
+
+    private async Task DeletePhoto(int id)
+    {
+        var client = await AuthorizedClient.GetClientAsync();
+
+        var response = await client.DeleteAsync($"api/photos/{id}");
+
+        if (response.IsSuccessStatusCode)
+        {
+            await LoadLatestPhotos();
+        }
+    }
+
+    private async Task DownloadPhoto(int id)
+    {
+        var client = await AuthorizedClient.GetClientAsync();
+        var response = await client.GetAsync($"api/photos/{id}/download");
+
+        if (!response.IsSuccessStatusCode)
+            return;
+
+        var bytes = await response.Content.ReadAsByteArrayAsync();
+        var base64 = Convert.ToBase64String(bytes);
+
+        var fileName = response.Content.Headers.ContentDisposition?.FileNameStar
+            ?? response.Content.Headers.ContentDisposition?.FileName
+            ?? $"photo-{id}";
+
+        await JSRuntime.InvokeVoidAsync("downloadFileFromBase64", fileName.Trim('"'), base64);
+    }
+
+    public class UploadModel
+    {
+        public string Description { get; set; } = "";
+        public bool Resize { get; set; }
+        public int? Width { get; set; }
+        public int? Height { get; set; }
+        public bool ApplySepia { get; set; }
+        public bool ApplyBlur { get; set; }
+        public float BlurAmount { get; set; } = 3f;
+        public string OutputFormat { get; set; } = "jpg";
+    }
+
+    public class PhotoDto
+    {
+        public int Id { get; set; }
+        public string AuthorId { get; set; } = "";
+        public string? AuthorEmail { get; set; }
+        public string Description { get; set; } = "";
+        public string ImagePath { get; set; } = "";
+        public long FileSizeBytes { get; set; }
+        public DateTime UploadedAt { get; set; }
+        public List<string> Hashtags { get; set; } = new();
+    }
+
+    public class PhotoSearchDto
+    {
+        public string? Hashtag { get; set; }
+        public long? MinSizeBytes { get; set; }
+        public long? MaxSizeBytes { get; set; }
+        public DateTime? UploadedFrom { get; set; }
+        public DateTime? UploadedTo { get; set; }
+        public string? AuthorEmail { get; set; }
+    }
+
+    public class EditPhotoMetadataRequest
+    {
+        public string Description { get; set; } = "";
+        public List<string> Hashtags { get; set; } = new();
+    }
+
+    public class UserDto
+    {
+        public string Id { get; set; } = "";
+        public string? Email { get; set; }
+    }
+}

@@ -115,14 +115,14 @@ namespace Pixora.BL.Services.Photos
         public IEnumerable<Photo> Search(PhotoSearchDto dto)
         {
             return _photoRepository.Search(dto.Hashtag, dto.MinSizeBytes, dto.MaxSizeBytes, dto.UploadedFrom,
-                dto.UploadedTo, dto.AuthorId);
+                dto.UploadedTo, dto.AuthorEmail);
         }
 
-        public void EditMetadata(EditPhotoMetadataDto dto)
+        public void EditMetadata(EditPhotoMetadataDto dto, bool isAdmin = false)
         {
             var photo = _photoRepository.GetById(dto.PhotoId) ?? throw new InvalidOperationException("Photo not found.");
 
-            if (photo.AuthorId != dto.UserId)
+            if (!isAdmin && photo.AuthorId != dto.UserId)
             {
                 throw new UnauthorizedAccessException("You can edit only your own photos.");
             }
