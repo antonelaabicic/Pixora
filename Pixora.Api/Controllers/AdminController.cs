@@ -103,5 +103,26 @@ namespace Pixora.Api.Controllers
 
             return Ok("User plan changed by admin.");
         }
+
+        [HttpPut("photos/{id}/metadata")]
+        public IActionResult EditPhotoMetadata(int id, EditPhotoMetadataRequest request)
+        {
+            var adminId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            if (adminId == null)
+                return Unauthorized();
+
+            var dto = new EditPhotoMetadataDto
+            {
+                PhotoId = id,
+                UserId = adminId,
+                Description = request.Description,
+                Hashtags = request.Hashtags
+            };
+
+            _photoService.EditMetadata(dto, isAdmin: true);
+
+            return Ok("Photo metadata updated by admin.");
+        }
     }
 }

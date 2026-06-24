@@ -82,7 +82,7 @@ namespace Pixora.DAL.Repositories.Impl
             _context.SaveChanges();
         }
 
-        public IEnumerable<Photo> Search(string? hashtag, long? minSizeBytes, long? maxSizeBytes, DateTime? uploadedFrom, DateTime? uploadedTo, string? authorId)
+        public IEnumerable<Photo> Search(string? hashtag, long? minSizeBytes, long? maxSizeBytes, DateTime? uploadedFrom, DateTime? uploadedTo, string? authorEmail)
         {
             var query = _context.Photos
                 .Include(p => p.Author)
@@ -115,12 +115,18 @@ namespace Pixora.DAL.Repositories.Impl
                 query = query.Where(p => p.UploadedAt <= uploadedTo.Value);
             }
 
-            if (!string.IsNullOrWhiteSpace(authorId))
+            if (!string.IsNullOrWhiteSpace(authorEmail))
             {
-                query = query.Where(p => p.AuthorId == authorId);
+                var normalizedEmail = authorEmail.Trim().ToUpper();
+
+                query = query.Where(p =>
+                    p.Author != null &&
+                    p.Author.NormalizedEmail == normalizedEmail);
             }
 
-            return query.ToList();
+            return query
+                .OrderByDescending(p => p.UploadedAt)
+                .ToList();
         }
 
         public void Update(Photo entity)

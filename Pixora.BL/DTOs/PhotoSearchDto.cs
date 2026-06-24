@@ -18,6 +18,6 @@ namespace Pixora.BL.DTOs
 
         public DateTime? UploadedTo { get; set; }
 
-        public string? AuthorId { get; set; }
+        public string? AuthorEmail { get; set; }
     }
 }

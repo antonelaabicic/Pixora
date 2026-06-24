@@ -1,0 +1,160 @@
+﻿@page "/profile"
+@inject AuthorizedHttpClient AuthorizedClient
+@inject NavigationManager Navigation
+@rendermode InteractiveServer
+
+<h3>My Profile</h3>
+
+@if (user == null)
+{
+    <p>Loading profile...</p>
+}
+else
+{
+    <div class="card shadow-sm p-4" style="max-width: 600px;">
+        <p><strong>Email:</strong> @user.Email</p>
+        <p><strong>Current plan:</strong> @user.PlanType</p>
+
+        @if (user.PendingPlanType != null)
+        {
+            <p><strong>Pending plan:</strong> @user.PendingPlanType</p>
+            <p><strong>Active from:</strong> @user.PendingPlanActiveFrom</p>
+        }
+
+        <p><strong>Storage used:</strong> @FormatBytes(user.StorageUsedBytes)</p>
+
+        <hr />
+
+        <h5>Change plan</h5>
+
+        <div class="mb-3">
+            <select class="form-select" @bind="selectedPlan">
+                <option value="0">Free</option>
+                <option value="1">Pro</option>
+                <option value="2">Gold</option>
+            </select>
+        </div>
+
+        <button class="btn btn-primary" @onclick="OpenConfirmModal">
+            Request plan change
+        </button>
+
+        @if (!string.IsNullOrWhiteSpace(message))
+        {
+            <div class="alert alert-info mt-3">@message</div>
+        }
+    </div>
+}
+
+@if (showConfirmModal)
+{
+    <div class="modal show d-block" style="background-color:rgba(0,0,0,0.6);">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5>Confirm plan change</h5>
+                    <button class="btn-close" @onclick="CloseConfirmModal"></button>
+                </div>
+
+                <div class="modal-body">
+                    Are you sure you want to change your plan?
+                    The change will become active tomorrow.
+                </div>
+
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" @onclick="CloseConfirmModal">Cancel</button>
+                    <button class="btn btn-primary" @onclick="ChangePlan">Confirm</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private UserDto? user;
+    private int selectedPlan;
+    private string? message;
+    private bool showConfirmModal;
+
+    private bool loaded;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender || loaded)
+            return;
+
+        loaded = true;
+        await LoadProfile();
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task LoadProfile()
+    {
+        var client = await AuthorizedClient.GetClientAsync();
+        user = await client.GetFromJsonAsync<UserDto>("api/user/plan");
+
+        if (user != null)
+        {
+            selectedPlan = (int)user.PlanType;
+        }
+    }
+
+    private void OpenConfirmModal()
+    {
+        showConfirmModal = true;
+    }
+
+    private void CloseConfirmModal()
+    {
+        showConfirmModal = false;
+    }
+
+    private async Task ChangePlan()
+    {
+        showConfirmModal = false;
+
+        var client = await AuthorizedClient.GetClientAsync();
+
+        var response = await client.PostAsJsonAsync("api/user/plan", new ChangePlanRequest
+        {
+            NewPlanType = selectedPlan
+        });
+
+        message = response.IsSuccessStatusCode
+            ? await response.Content.ReadAsStringAsync()
+            : await response.Content.ReadAsStringAsync();
+
+        await LoadProfile();
+    }
+
+    private static string FormatBytes(long bytes)
+    {
+        if (bytes >= 1024 * 1024)
+            return $"{bytes / 1024.0 / 1024.0:F2} MB";
+
+        return $"{bytes / 1024.0:F2} KB";
+    }
+
+    public class UserDto
+    {
+        public string Id { get; set; } = "";
+        public string? Email { get; set; }
+        public PlanType PlanType { get; set; }
+        public PlanType? PendingPlanType { get; set; }
+        public DateOnly? PendingPlanActiveFrom { get; set; }
+        public DateOnly? LastPlanChangeDate { get; set; }
+        public long StorageUsedBytes { get; set; }
+    }
+
+    public class ChangePlanRequest
+    {
+        public int NewPlanType { get; set; }
+    }
+
+    public enum PlanType
+    {
+        Free = 0,
+        Pro = 1,
+        Gold = 2
+    }
+}

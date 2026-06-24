@@ -109,7 +109,7 @@ namespace Pixora.Api.Controllers
 
             try
             {
-                _photoService.EditMetadata(dto);
+                _photoService.EditMetadata(dto, isAdmin:false);
 
                 return Ok("Photo metadata updated.");
             }

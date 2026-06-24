@@ -12,6 +12,6 @@ namespace Pixora.DAL.Repositories.Interfaces
         IEnumerable<Photo> GetLatest(int count);
         IEnumerable<Photo> GetByAuthorId(string authorId);
         IEnumerable<Photo> Search(string? hashtag, long? minSizeBytes, long? maxSizeBytes, DateTime? uploadedFrom,
-            DateTime? uploadedTo, string? authorId);
+            DateTime? uploadedTo, string? authorEmail);
     }
 }
