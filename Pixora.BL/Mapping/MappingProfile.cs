@@ -33,6 +33,10 @@ namespace Pixora.BL.Mapping
             CreateMap<UpdateUserDto, ApplicationUser>()
                 .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.UserId))
                 .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
+
+            CreateMap<UserActionLog, UserActionLogDto>()
+                .ForMember(dest => dest.UserEmail, opt => opt.MapFrom(src => src.User != null ? src.User.Email : null))
+                .ForMember(dest => dest.ActionType, opt => opt.MapFrom(src => src.ActionType.ToString()));
         }
     }
 }

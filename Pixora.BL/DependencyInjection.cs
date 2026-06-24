@@ -7,6 +7,7 @@ using Pixora.BL.Services.Logs;
 using Pixora.BL.Services.Photos;
 using Pixora.BL.Services.Plans;
 using Pixora.BL.Services.Storage;
+using Pixora.BL.Services.Users;
 
 namespace Pixora.BL
 {
@@ -31,6 +32,7 @@ namespace Pixora.BL
             services.AddScoped<IImageStorageService, SupabaseStorageAdapter>();
 
             services.AddScoped<IAuthFacade, AuthFacade>();
+            services.AddScoped<IJwtService, JwtService>();
             services.AddScoped<IHashtagService, HashtagService>();
             services.AddScoped<IUserActionLogService, UserActionLogService>();
             services.AddScoped<IPhotoService, PhotoService>();

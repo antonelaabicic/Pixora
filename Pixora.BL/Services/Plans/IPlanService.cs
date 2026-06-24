@@ -1,4 +1,5 @@
 ﻿using Pixora.BL.DTOs;
+using Pixora.DAL.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -12,5 +13,6 @@ namespace Pixora.BL.Services.Plans
         UserDto GetUserPlan(string userId);
         void RequestPlanChange(ChangePlanDto dto);
         void ApplyPendingPlanIfNeeded(string userId);
+        void AdminChangeUserPlan(string userId, PlanType newPlanType);
     }
 }
