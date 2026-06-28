@@ -11,13 +11,13 @@
         <h3 class="text-center mb-4">Login</h3>
 
         <div class="mb-3">
-            <label>Email</label>
-            <input class="form-control" @bind="login.Email" />
+            <label for="email">Email</label>
+            <input id="email" class="form-control" @bind="login.Email" />
         </div>
 
         <div class="mb-3">
-            <label>Password</label>
-            <input class="form-control" type="password" @bind="login.Password" />
+            <label for="password">Password</label>
+            <input id="password" class="form-control" data-testid="password-input" type="password" @bind="login.Password" />
         </div>
 
         @if (!string.IsNullOrWhiteSpace(error))
