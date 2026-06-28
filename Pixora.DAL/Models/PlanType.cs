@@ -8,8 +8,8 @@ namespace Pixora.DAL.Models
 {
     public enum PlanType
     {
-        Free,
-        Pro,
-        Gold
+        Free = 0,
+        Pro = 1,
+        Gold = 2
     }
 }

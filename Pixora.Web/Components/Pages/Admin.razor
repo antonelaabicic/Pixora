@@ -1,4 +1,5 @@
 ﻿@page "/admin"
+@using Pixora.BL.DTOs
 @inject AuthorizedHttpClient AuthorizedClient
 @rendermode InteractiveServer
 
@@ -131,41 +132,15 @@ else
 
     private static string FormatBytes(long bytes)
     {
-        if (bytes >= 1024 * 1024)
+        if (bytes >= 1024 * 1024) {
             return $"{bytes / 1024.0 / 1024.0:F2} MB";
+        }
 
         return $"{bytes / 1024.0:F2} KB";
-    }
-
-    public class UserDto
-    {
-        public string Id { get; set; } = "";
-        public string? Email { get; set; }
-        public PlanType PlanType { get; set; }
-        public PlanType? PendingPlanType { get; set; }
-        public DateOnly? PendingPlanActiveFrom { get; set; }
-        public long StorageUsedBytes { get; set; }
-    }
-
-    public class UserActionLogDto
-    {
-        public int Id { get; set; }
-        public string? UserId { get; set; }
-        public string? UserEmail { get; set; }
-        public string ActionType { get; set; } = "";
-        public string Details { get; set; } = "";
-        public DateTime CreatedAt { get; set; }
     }
 
     public class ChangeUserPlanRequest
     {
         public int NewPlanType { get; set; }
-    }
-
-    public enum PlanType
-    {
-        Free = 0,
-        Pro = 1,
-        Gold = 2
     }
 }
