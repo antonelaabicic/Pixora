@@ -10,19 +10,20 @@ namespace Pixora.BL.Services.Storage
 {
     public class SupabaseStorageClient
     {
+        private readonly HttpClient _client;
+        public SupabaseStorageClient(IHttpClientFactory httpClientFactory)
+        {
+            _client = httpClientFactory.CreateClient("Supabase");
+        }
+
         public async Task<string> UploadAsync(Stream imageStream, string fileName, string contentType)
         {
-            var storageUrl = ConfigManager.SupabaseStorageObjectUrl(fileName);
-
-            using var httpClient = new HttpClient();
-
-            httpClient.DefaultRequestHeaders.Authorization =
-                new AuthenticationHeaderValue("Bearer", ConfigManager.SupabaseApiKey);
+            var storageUrl = SupabaseConfig.StorageObjectUrl(fileName);
 
             using var content = new StreamContent(imageStream);
             content.Headers.ContentType = new MediaTypeHeaderValue(contentType);
 
-            var response = await httpClient.PutAsync(storageUrl, content);
+            var response = await _client.PutAsync(storageUrl, content);
 
             if (!response.IsSuccessStatusCode)
             {
@@ -30,18 +31,13 @@ namespace Pixora.BL.Services.Storage
                 throw new InvalidOperationException($"Supabase upload failed: {error}");
             }
 
-            return ConfigManager.SupabasePublicUrl(fileName);
+            return SupabaseConfig.PublicUrl(fileName);
         }
         public async Task DeleteAsync(string fileName)
         {
-            var storageUrl = ConfigManager.SupabaseStorageObjectUrl(fileName);
+            var storageUrl = SupabaseConfig.StorageObjectUrl(fileName);
 
-            using var httpClient = new HttpClient();
-
-            httpClient.DefaultRequestHeaders.Authorization =
-                new AuthenticationHeaderValue("Bearer", ConfigManager.SupabaseApiKey);
-
-            var response = await httpClient.DeleteAsync(storageUrl);
+            var response = await _client.DeleteAsync(storageUrl);
 
             if (!response.IsSuccessStatusCode)
             {

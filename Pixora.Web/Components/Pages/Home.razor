@@ -249,6 +249,11 @@ else
                         </div>
                     }
 
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="checkbox" @bind="upload.ApplyGrayscale" />
+                        <label class="form-check-label">Grayscale</label>
+                    </div>
+
                     <div class="mb-3">
                         <label>Output format</label>
                         <select class="form-select" @bind="upload.OutputFormat">
@@ -437,6 +442,7 @@ else
             .WithResize(upload.Resize, upload.Width, upload.Height)
             .WithSepia(upload.ApplySepia)
             .WithBlur(upload.ApplyBlur, upload.BlurAmount)
+            .WithGrayscale(upload.ApplyGrayscale)
             .WithFormat(upload.OutputFormat)
             .Build();
 
@@ -446,6 +452,7 @@ else
         content.Add(new StringContent(options.ApplySepia.ToString()), "ApplySepia");
         content.Add(new StringContent(options.ApplyBlur.ToString()), "ApplyBlur");
         content.Add(new StringContent(options.BlurAmount.ToString()), "BlurAmount");
+        content.Add(new StringContent(options.ApplyGrayscale.ToString()), "ApplyGrayscale");
         content.Add(new StringContent(options.OutputFormat), "OutputFormat");
 
         var response = await client.PostAsync("api/photos/upload", content);
@@ -500,6 +507,7 @@ else
         public bool ApplySepia { get; set; }
         public bool ApplyBlur { get; set; }
         public float BlurAmount { get; set; } = 3f;
+        public bool ApplyGrayscale { get; set; }
         public string OutputFormat { get; set; } = "jpg";
     }
 

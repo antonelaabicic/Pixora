@@ -11,7 +11,7 @@ namespace Pixora.DAL
     {
         public static IServiceCollection AddDalServices(this IServiceCollection services)
         {
-            services.AddDbContext<PixoraContext>(options => options.UseNpgsql(ConfigManager.ConnectionString));
+            services.AddDbContext<PixoraContext>(options => options.UseNpgsql(DatabaseConfig.ConnectionString));
 
             services.AddScoped<IRepositoryProvider, RepositoryProvider>();
 

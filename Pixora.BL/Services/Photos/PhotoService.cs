@@ -7,6 +7,7 @@ using Pixora.BL.Services.Plans;
 using Pixora.BL.Services.Storage;
 using Pixora.DAL.Models;
 using Pixora.DAL.Repositories.Interfaces;
+using System.Net.Http;
 
 namespace Pixora.BL.Services.Photos
 {
@@ -18,14 +19,15 @@ namespace Pixora.BL.Services.Photos
         private readonly IHashtagService _hashtagService;
         private readonly IImageStorageService _storageService;
         private readonly IImageProcessor _imageProcessor;
+        private readonly IHttpClientFactory _httpClientFactory;
         private readonly PlanPolicyResolver _planPolicyResolver;
-        private readonly IUserActionLogService _logService;
+
         private readonly IMapper _mapper;
 
         public PhotoService(IPhotoRepository photoRepository, IPhotoHashtagRepository photoHashtagRepository,
             IApplicationUserRepository userRepository, IHashtagService hashtagService,
             IImageStorageService storageService, IImageProcessor imageProcessor,
-            PlanPolicyResolver planPolicyResolver, IUserActionLogService logService, IMapper mapper)
+            PlanPolicyResolver planPolicyResolver, IHttpClientFactory httpClientFactory, IMapper mapper)
         {
             _photoRepository = photoRepository;
             _photoHashtagRepository = photoHashtagRepository;
@@ -34,7 +36,7 @@ namespace Pixora.BL.Services.Photos
             _storageService = storageService;
             _imageProcessor = imageProcessor;
             _planPolicyResolver = planPolicyResolver;
-            _logService = logService;
+            _httpClientFactory = httpClientFactory;
             _mapper = mapper;
         }
 
@@ -175,12 +177,8 @@ namespace Pixora.BL.Services.Photos
         {
             var photo = _photoRepository.GetById(photoId) ?? throw new InvalidOperationException("Photo not found.");
 
-            using var httpClient = new HttpClient();
-            var stream = await httpClient.GetStreamAsync(photo.ImagePath);
-
-            var memoryStream = new MemoryStream();
-            await stream.CopyToAsync(memoryStream);
-            memoryStream.Position = 0;
+            var client = _httpClientFactory.CreateClient("Downloads");
+            var stream = await client.GetStreamAsync(photo.ImagePath);
 
             var extension = Path.GetExtension(photo.ImagePath);
 
@@ -191,7 +189,7 @@ namespace Pixora.BL.Services.Photos
 
             return new DownloadPhotoDto
             {
-                Stream = memoryStream,
+                Stream = stream,
                 FileName = $"photo-{photo.Id}{extension}",
                 ContentType = GetContentType(extension)
             };
