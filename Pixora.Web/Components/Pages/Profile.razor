@@ -1,4 +1,5 @@
 ﻿@page "/profile"
+@using Pixora.DAL.Models
 @inject AuthorizedHttpClient AuthorizedClient
 @inject NavigationManager Navigation
 @rendermode InteractiveServer
@@ -32,6 +33,7 @@ else
                 <option value="0">Free</option>
                 <option value="1">Pro</option>
                 <option value="2">Gold</option>
+                <option value="3">Platinum</option>
             </select>
         </div>
 
@@ -129,8 +131,9 @@ else
 
     private static string FormatBytes(long bytes)
     {
-        if (bytes >= 1024 * 1024)
+        if (bytes >= 1024 * 1024) {
             return $"{bytes / 1024.0 / 1024.0:F2} MB";
+        }
 
         return $"{bytes / 1024.0:F2} KB";
     }
@@ -149,12 +152,5 @@ else
     public class ChangePlanRequest
     {
         public int NewPlanType { get; set; }
-    }
-
-    public enum PlanType
-    {
-        Free = 0,
-        Pro = 1,
-        Gold = 2
     }
 }

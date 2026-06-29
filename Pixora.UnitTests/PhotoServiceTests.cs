@@ -29,7 +29,7 @@ public class PhotoServiceTests
     private readonly Mock<IHashtagService> _hashtagService = new();
     private readonly Mock<IImageStorageService> _storageService = new();
     private readonly Mock<IImageProcessor> _imageProcessor = new();
-    private readonly Mock<IUserActionLogService> _logService = new();
+    private readonly Mock<IHttpClientFactory> _httpClientFactory = new();
     private readonly Mock<IMapper> _mapper = new();
 
     private PhotoService CreateService()
@@ -42,7 +42,7 @@ public class PhotoServiceTests
         });
 
         return new PhotoService(_photoRepo.Object, _photoHashtagRepo.Object, _userRepo.Object, _hashtagService.Object,
-            _storageService.Object, _imageProcessor.Object, resolver, _logService.Object, _mapper.Object
+            _storageService.Object, _imageProcessor.Object, resolver, _httpClientFactory.Object, _mapper.Object
         );
     }
 

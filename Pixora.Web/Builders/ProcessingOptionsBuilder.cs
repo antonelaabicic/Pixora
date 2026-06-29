@@ -31,6 +31,11 @@ namespace Pixora.Web.Builders
             return this;
         }
 
+        public ProcessingOptionsBuilder WithGrayscale(bool applyGrayscale)
+        {
+            _options.ApplyGrayscale = applyGrayscale;
+            return this;
+        }
         public ProcessingOptionsBuilder WithFormat(string outputFormat)
         {
             _options.OutputFormat = string.IsNullOrWhiteSpace(outputFormat)

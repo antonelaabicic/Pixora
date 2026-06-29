@@ -17,7 +17,6 @@ builder.Services.AddControllers(options =>
 });
 
 builder.Services.AddEndpointsApiExplorer();
-//builder.Services.AddSwaggerGen();
 
 builder.Services.AddDalServices();
 builder.Services.AddBlServices();
@@ -41,20 +40,20 @@ builder.Services.AddAuthentication(options =>
         ValidateLifetime = true,
         ValidateIssuerSigningKey = true,
 
-        ValidIssuer = ConfigManager.JwtIssuer,
-        ValidAudience = ConfigManager.JwtAudience,
-        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(ConfigManager.JwtSecret))
+        ValidIssuer = JwtConfig.JwtIssuer,
+        ValidAudience = JwtConfig.JwtAudience,
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(JwtConfig.JwtSecret))
     };
 })
 .AddGoogle(options =>
 {
-    options.ClientId = ConfigManager.GoogleClientId;
-    options.ClientSecret = ConfigManager.GoogleClientSecret;
+    options.ClientId = GoogleConfig.ClientId;
+    options.ClientSecret = GoogleConfig.ClientSecret;
 })
 .AddGitHub(options =>
 {
-    options.ClientId = ConfigManager.GitHubClientId;
-    options.ClientSecret = ConfigManager.GitHubClientSecret;
+    options.ClientId = GithubConfig.ClientId;
+    options.ClientSecret = GithubConfig.ClientSecret;
     options.Scope.Add("user:email");
 });
 

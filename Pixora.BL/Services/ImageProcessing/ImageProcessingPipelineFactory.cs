@@ -9,11 +9,13 @@ namespace Pixora.BL.Services.ImageProcessing
             var resizeStep = new ResizeStep();
             var sepiaStep = new SepiaStep();
             var blurStep = new BlurStep();
+            var grayscaleStep = new GrayscaleStep();
             var formatStep = new FormatStep();
 
             resizeStep.SetNext(sepiaStep);
             sepiaStep.SetNext(blurStep);
-            blurStep.SetNext(formatStep);
+            blurStep.SetNext(grayscaleStep);
+            grayscaleStep.SetNext(formatStep);
 
             return resizeStep;
         }

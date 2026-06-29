@@ -23,7 +23,7 @@ namespace Pixora.BL.Services.Storage
                 return;
             }
 
-            var basePublicUrl = $"{ConfigManager.SupabasePublicBaseUrl}/";
+            var basePublicUrl = $"{SupabaseConfig.PublicBaseUrl}/";
             var fileName = imageUrl.Replace(basePublicUrl, "");
 
             await _client.DeleteAsync(fileName);
@@ -33,7 +33,7 @@ namespace Pixora.BL.Services.Storage
         {
             if (imageStream == null || imageStream.Length == 0)
             {
-                return ConfigManager.DefaultImagePath;
+                return SupabaseConfig.DefaultImagePath;
             }
 
             var cleanExtension = fileExtension.StartsWith(".") ? fileExtension : $".{fileExtension}";

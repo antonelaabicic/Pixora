@@ -17,6 +17,8 @@ namespace Pixora.Api.Requests
         public bool ApplyBlur { get; set; }
         public float BlurAmount { get; set; } = 3f;
 
+        public bool ApplyGrayscale { get; set; }
+
         public string OutputFormat { get; set; } = "jpg";
 
         public UploadPhotoDto ToDto(string userId)
@@ -38,6 +40,7 @@ namespace Pixora.Api.Requests
                     ApplySepia = ApplySepia,
                     ApplyBlur = ApplyBlur,
                     BlurAmount = BlurAmount,
+                    ApplyGrayscale = ApplyGrayscale,
                     OutputFormat = OutputFormat
                 }
             };

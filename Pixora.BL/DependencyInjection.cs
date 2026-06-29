@@ -8,6 +8,8 @@ using Pixora.BL.Services.Photos;
 using Pixora.BL.Services.Plans;
 using Pixora.BL.Services.Storage;
 using Pixora.BL.Services.Users;
+using Pixora.DAL.Config;
+using System.Net.Http.Headers;
 
 namespace Pixora.BL
 {
@@ -23,10 +25,18 @@ namespace Pixora.BL
             services.AddScoped<IPlanPolicy, FreePlanPolicy>();
             services.AddScoped<IPlanPolicy, ProPlanPolicy>();
             services.AddScoped<IPlanPolicy, GoldPlanPolicy>();
+            services.AddScoped<IPlanPolicy, PlatinumPlanPolicy>();
             services.AddScoped<PlanPolicyResolver>();
 
             services.AddScoped<IImageProcessingPipelineFactory, ImageProcessingPipelineFactory>();
             services.AddScoped<IImageProcessor, ImageProcessor>();
+
+            services.AddHttpClient("Supabase", client =>
+            {
+                client.DefaultRequestHeaders.Authorization =
+                    new AuthenticationHeaderValue("Bearer", SupabaseConfig.ApiKey);
+            });
+            services.AddHttpClient("Downloads");
 
             services.AddScoped<SupabaseStorageClient>();
             services.AddScoped<IImageStorageService, SupabaseStorageAdapter>();

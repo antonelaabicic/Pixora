@@ -32,12 +32,12 @@ namespace Pixora.BL.Services.Auth
                 new Claim(ClaimTypes.Role, role)
             };
 
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(ConfigManager.JwtSecret));
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(JwtConfig.JwtSecret));
             var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
             var token = new JwtSecurityToken(
-                issuer: ConfigManager.JwtIssuer,
-                audience: ConfigManager.JwtAudience,
+                issuer: JwtConfig.JwtIssuer,
+                audience: JwtConfig.JwtAudience,
                 claims: claims,
                 expires: DateTime.UtcNow.AddHours(2),
                 signingCredentials: credentials);
